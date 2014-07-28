@@ -41,3 +41,4 @@ share/lib/git-hub.d/json.bash
 share/lib/git-hub.d/json.pl
 share/man/man1/git-hub.1
 t/release-pod-syntax.t
+t/test.t
