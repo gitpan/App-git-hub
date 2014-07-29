@@ -26,4 +26,4 @@ resources:
   bugtracker: https://github.com/ingydotnet/git-hub/issues
   homepage: https://github.com/ingydotnet/git-hub
   repository: https://github.com/ingydotnet/git-hub.git
-version: 0.1.1
+version: 0.1.2
