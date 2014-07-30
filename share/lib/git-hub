@@ -17,7 +17,7 @@ set -e
   unset -f Bash:version-check
 }
 
-GIT_HUB_VERSION=0.1.2
+GIT_HUB_VERSION=0.1.3
 
 OPTIONS_SPEC="\
 git hub <command> <options> <arguments>
@@ -131,6 +131,7 @@ run-command() {
         nay "API status code: $status_code\n"
       [ -n "$ERROR" ] &&
         nay "API error output:\n$ERROR\n"
+      nay "See files in: $GIT_HUB_CACHE/$command_sha1/"
     fi
   fi
   true
