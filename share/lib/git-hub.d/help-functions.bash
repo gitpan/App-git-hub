@@ -16,9 +16,10 @@ follow               follow <user>...
 followers            followers [<user>]
 following            following [<user>]
 follows              follows <user> [<target-user>]
-fork                 fork <owner>/<repo> [<org>] [--remote=<name>]
+fork                 fork <owner>/<repo> [--org=<org>] [--remote=<name>]
 forks                forks [<owner>/<repo>]
 help                 help
+info                 info
 irc-enable           irc-enable <room> [<server>]
 irc-enable           irc-enable
 irc-url              irc-url
@@ -31,19 +32,22 @@ issues               issues [<owner>/<repo>] [--all]
 keys                 keys [<user>]
 keys-add             keys-add <title> <key>
 member-add           member-add <team_id> <user>
+member-get           member-get <team_id> <user>
 member-remove        member-remove <team_id> <user>
 members              members <org>
+notify-list          notify-list [--all]
 open                 open [<owner>/<repo>] [<file-path>]
 org                  org <org>
 org-edit             org-edit <org> <key-value-pairs>...
 org-get              org-get <org> <data-key>
+org-repos            org-repos <org>
 orgs                 orgs [<user>]
-pull-diff            pull-diff [<owner>/<repo>] <issue-id-number>
-pull-fetch           pull-fetch [<owner>/<repo>] <issue-id-number>
-pull-merge           pull-merge [<owner>/<repo>] <issue-id-number>
-pull-queue           pull-queue [<user>] [--count=#] [--all]
-pull-request         pull-request [<issue-id-number>] [<options>]
-pulls                pulls [<owner>/<repo>]
+pr-diff              pr-diff [<owner>/<repo>] <issue-id-number>
+pr-fetch             pr-fetch [<owner>/<repo>] <issue-id-number>
+pr-list              pr-list [<owner>/<repo>]
+pr-merge             pr-merge [<owner>/<repo>] <issue-id-number>
+pr-new               pr-new [<issue-id-number>] [<options>]
+pr-queue             pr-queue [<user>] [--count=#] [--all]
 repo                 repo [<repo>]
 repo-delete          repo-delete <owner>/<repo>
 repo-edit            repo-edit [<owner>/]<repo> <key-value-pair>...
@@ -184,7 +188,7 @@ help:follows() {
 help:fork() {
     cat <<'...'
 
-  Usage: git hub fork <owner>/<repo> [<org>] [--remote=<name>]
+  Usage: git hub fork <owner>/<repo> [--org=<org>] [--remote=<name>]
 
   Fork a repository to your account or to an organization. Optionally, you can
   specify the name of a remote to add, pointing to your fork.
@@ -206,6 +210,17 @@ help:help() {
   Usage: git hub help
 
   Show this manpage.
+...
+}
+
+help:info() {
+    cat <<'...'
+
+  Usage: git hub info
+
+  Show detailed version and environment info about your `git-hub` installation.
+  This can be useful for figuring out things about how `git-hub` is operating
+  in a given situation. Also good for reporting bugs / issues in `git-hub`.
 ...
 }
 
@@ -325,6 +340,15 @@ help:member-add() {
 ...
 }
 
+help:member-get() {
+    cat <<'...'
+
+  Usage: git hub member-get <team_id> <user>
+
+  Show whether a user is a member of a specified team.
+...
+}
+
 help:member-remove() {
     cat <<'...'
 
@@ -340,6 +364,16 @@ help:members() {
   Usage: git hub members <org>
 
   List the members of an organization.
+...
+}
+
+help:notify-list() {
+    cat <<'...'
+
+  Usage: git hub notify-list [--all]
+
+  List your recent /unread/ user notifications. To list your /read/
+  notifications as well, use the `--all` option.
 ...
 }
 
@@ -384,6 +418,15 @@ help:org-get() {
 ...
 }
 
+help:org-repos() {
+    cat <<'...'
+
+  Usage: git hub org-repos <org>
+
+  Show all the repos for an organization, both public and private.
+...
+}
+
 help:orgs() {
     cat <<'...'
 
@@ -393,52 +436,46 @@ help:orgs() {
 ...
 }
 
-help:pull-diff() {
+help:pr-diff() {
     cat <<'...'
 
-  Usage: git hub pull-diff [<owner>/<repo>] <issue-id-number>
+  Usage: git hub pr-diff [<owner>/<repo>] <issue-id-number>
 
   Show the diff for a pull request.
 ...
 }
 
-help:pull-fetch() {
+help:pr-fetch() {
     cat <<'...'
 
-  Usage: git hub pull-fetch [<owner>/<repo>] <issue-id-number>
+  Usage: git hub pr-fetch [<owner>/<repo>] <issue-id-number>
 
   Fetches a pull request to a local `review/$number` branch
 ...
 }
 
-help:pull-merge() {
+help:pr-list() {
     cat <<'...'
 
-  Usage: git hub pull-merge [<owner>/<repo>] <issue-id-number>
+  Usage: git hub pr-list [<owner>/<repo>]
+
+  List the pull requests for a repo.
+...
+}
+
+help:pr-merge() {
+    cat <<'...'
+
+  Usage: git hub pr-merge [<owner>/<repo>] <issue-id-number>
 
   Merge and close a pull request.
 ...
 }
 
-help:pull-queue() {
+help:pr-new() {
     cat <<'...'
 
-  Usage: git hub pull-queue [<user>] [--count=#] [--all]
-
-  Show a user's Pull Request queue, for all repos. Shows the open PRs for any
-  repo that has them. The `--count` option tells how many repos to check. The
-  `--all` option says to show closed as well as open PRs.
-
-  Note: this command makes more API calls than most other commands and thus
-  runs slower. You might want to tee the output to a file, if you need to get
-  back to this data a lot.
-...
-}
-
-help:pull-request() {
-    cat <<'...'
-
-  Usage: git hub pull-request [<issue-id-number>] [<options>]
+  Usage: git hub pr-new [<issue-id-number>] [<options>]
 
   Create a new pull request for a repository based on the current branch.  If
   an issue ID number is given, this command will attach the pull request to the
@@ -452,12 +489,18 @@ help:pull-request() {
 ...
 }
 
-help:pulls() {
+help:pr-queue() {
     cat <<'...'
 
-  Usage: git hub pulls [<owner>/<repo>]
+  Usage: git hub pr-queue [<user>] [--count=#] [--all]
 
-  List the pull requests for a repo.
+  Show a user's Pull Request queue, for all repos. Shows the open PRs for any
+  repo that has them. The `--count` option tells how many repos to check. The
+  `--all` option says to show closed as well as open PRs.
+
+  Note: this command makes more API calls than most other commands and thus
+  runs slower. You might want to tee the output to a file, if you need to get
+  back to this data a lot.
 ...
 }
 

@@ -70,8 +70,8 @@
 .rr rF
 .\" ========================================================================
 .\"
-.IX Title "IO::FILE=IO(0X1231F30) 1"
-.TH IO::FILE=IO(0X1231F30) 1 "2014-07-28" "perl v5.18.1" "User Contributed Perl Documentation"
+.IX Title "IO::FILE=IO(0XF7B0F0) 1"
+.TH IO::FILE=IO(0XF7B0F0) 1 "2014-09-04" "perl v5.18.1" "User Contributed Perl Documentation"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -120,28 +120,45 @@ another. For example you could use this technique to clone all the repos of a
 GitHub user or organization, with one command. See \s-1PIPE AND EACH\s0 below.
 .SH "Installation"
 .IX Header "Installation"
-Get the source code from GitHub:
+There are currently 3 ways to install \f(CW\*(C`git\-hub\*(C'\fR. For all of them you need to
+get the source code from GitHub:
 .PP
 .Vb 1
-\&    git clone git://github.com/ingydotnet/git\-hub.git
+\&    git clone git://github.com/ingydotnet/git\-hub /path/to/git\-hub
 .Ve
 .PP
-Then simply add the \f(CW\*(C`lib\*(C'\fR and \f(CW\*(C`man\*(C'\fR directories to your \s-1PATH\s0 and \s-1MANPATH:\s0
+The first installation method is preferred: \f(CW\*(C`source\*(C'\fR the \f(CW\*(C`init\*(C'\fR file. Just
+add a line like this one to your shell startup script:
+.PP
+.Vb 1
+\&    source /path/to/git\-hub/init
+.Ve
+.PP
+That will modify your \f(CW\*(C`PATH\*(C'\fR and \f(CW\*(C`MANPATH\*(C'\fR, and also enable command
+completion.
+.PP
+The second method is to do these things by hand. This might afford you more
+control of your shell environment. Simply add the \f(CW\*(C`lib\*(C'\fR and \f(CW\*(C`man\*(C'\fR
+directories to your \f(CW\*(C`PATH\*(C'\fR and \f(CW\*(C`MANPATH\*(C'\fR:
 .PP
 .Vb 2
-\&    export PATH=/path/to/git\-hub/lib:"$PATH"
-\&    export MANPATH=/path/to/git\-hub/man:"$MANPATH"
+\&    export PATH="/path/to/git\-hub/lib:$PATH"
+\&    export MANPATH="/path/to/git\-hub/man:$MANPATH"
 .Ve
 .PP
-To do a proper system install, which puts \f(CW\*(C`git\-hub\*(C'\fR next to your other git
-commands, do this instead:
+See below for info on how to turn on Command Completion.
+.PP
+The third method is a standard system install, which puts \f(CW\*(C`git\-hub\*(C'\fR next to
+your other git commands, do this instead:
 .PP
 .Vb 1
 \&    make install        # Possibly with \*(Aqsudo\*(Aq
 .Ve
+.PP
+This method does not account for upgrading and command completion yet.
 .SH "Upgrading"
 .IX Header "Upgrading"
-If you used the \s-1PATH\s0 method of installation, just run this to upgrade
+If you used the \f(CW\*(C`PATH\*(C'\fR method of installation, just run this to upgrade
 \&\f(CW\*(C`git\-hub\*(C'\fR:
 .PP
 .Vb 1
@@ -154,6 +171,57 @@ If you used \f(CW\*(C`make install\*(C'\fR method, then:
 \&    cd /path/to/git\-hub
 \&    git pull
 \&    make install
+.Ve
+.SH "Command Completion"
+.IX Header "Command Completion"
+The \f(CW\*(C`git hub\*(C'\fR command supports \f(CW\*(C`<TAB>\*(C'\fR\-based command completion. If you
+donât use the \f(CW\*(C`init\*(C'\fR script (see Installation, above), youâll need to enable
+this manually to use it.
+.SS "In Bash"
+.IX Subsection "In Bash"
+If your Bash setup does not already provide command completion for Git, youâll
+need to enable that first:
+.PP
+.Vb 1
+\&    source <Git completion script>
+.Ve
+.PP
+On your system, the Git completion script might be found at any of the
+following locations (or somewhere else that we donât know about):
+.IP "\(bu" 4
+\&\f(CW\*(C`/etc/bash_completion.d/git\*(C'\fR
+.IP "\(bu" 4
+\&\f(CW\*(C`/usr/share/bash\-completion/git\*(C'\fR
+.IP "\(bu" 4
+\&\f(CW\*(C`/usr/share/bash\-completion/completions/git\*(C'\fR
+.IP "\(bu" 4
+\&\f(CW\*(C`/opt/local/share/bash\-completion/completions/git\*(C'\fR
+.IP "\(bu" 4
+\&\f(CW\*(C`/usr/local/etc/bash_completion.d/git\*(C'\fR
+.IP "\(bu" 4
+\&\f(CW\*(C`~/.homebrew/etc/bash_completion.d/git\*(C'\fR
+.PP
+In case you canât find any of these, this repository contains a copy of the
+Git completion script:
+.PP
+.Vb 1
+\&    source /path/to/git\-hub/share/git\-completion.bash
+.Ve
+.PP
+Once Git completion is enabled (whether you needed to do that manually or
+not), you can turn on \f(CW\*(C`git\-hub\*(C'\fR completion with a command like this:
+.PP
+.Vb 1
+\&    source /path/to/git\-hub/share/completion.bash
+.Ve
+.SS "In zsh"
+.IX Subsection "In zsh"
+In the Z shell (zsh), you can manually enable \f(CW\*(C`git\-hub\*(C'\fR completion by
+adding the following line to your \f(CW\*(C`~/.zshrc\*(C'\fR, \fBbefore\fR the \f(CW\*(C`compinit\*(C'\fR
+function is called:
+.PP
+.Vb 1
+\&    fpath=(\*(Aq/path/to/git\-hub/share/zsh\-completion\*(Aq $fpath)
 .Ve
 .SH "Plugins"
 .IX Header "Plugins"
@@ -200,7 +268,7 @@ See \s-1PIPE\s0 and \s-1EACH\s0 below.
 .ie n .IP """=""" 4
 .el .IP "\f(CW=\fR" 4
 .IX Item "="
-Like the '\-' command above, but reads each \fBword\fR from stdin.
+Like the '\-' command above, but reads each \fBword\fR from stdin.
 .ie n .IP """\-h""" 4
 .el .IP "\f(CW\-h\fR" 4
 .IX Item "-h"
@@ -362,6 +430,12 @@ Show this manpage.
 .el .IP "\f(CWversion\fR" 4
 .IX Item "version"
 Print version info for \f(CW\*(C`git\-hub\*(C'\fR.
+.ie n .IP """info""" 4
+.el .IP "\f(CWinfo\fR" 4
+.IX Item "info"
+Show detailed version and environment info about your \f(CW\*(C`git\-hub\*(C'\fR installation.
+This can be useful for figuring out things about how \f(CW\*(C`git\-hub\*(C'\fR is operating
+in a given situation. Also good for reporting bugs / issues in \f(CW\*(C`git\-hub\*(C'\fR.
 .ie n .IP """setup""" 4
 .el .IP "\f(CWsetup\fR" 4
 .IX Item "setup"
@@ -409,6 +483,10 @@ List the organizations that a user is a member of.
 .IX Item "org <org>"
 Show basic information about a GitHub organization. The \f(CW\*(C`\-\-raw\*(C'\fR and \f(CW\*(C`\-\-json\*(C'\fR
 options show the data in different formats than normal output.
+.ie n .IP """org\-repos <org>""" 4
+.el .IP "\f(CWorg\-repos <org>\fR" 4
+.IX Item "org-repos <org>"
+Show all the repos for an organization, both public and private.
 .ie n .IP """org\-get <org> <data\-key>""" 4
 .el .IP "\f(CWorg\-get <org> <data\-key>\fR" 4
 .IX Item "org-get <org> <data-key>"
@@ -446,6 +524,10 @@ Delete a team.
 .el .IP "\f(CWmembers <org>\fR" 4
 .IX Item "members <org>"
 List the members of an organization.
+.ie n .IP """member\-get <team_id> <user>""" 4
+.el .IP "\f(CWmember\-get <team_id> <user>\fR" 4
+.IX Item "member-get <team_id> <user>"
+Show whether a user is a member of a specified team.
 .ie n .IP """member\-add <team_id> <user>""" 4
 .el .IP "\f(CWmember\-add <team_id> <user>\fR" 4
 .IX Item "member-add <team_id> <user>"
@@ -521,9 +603,9 @@ Delete a GitHub repository.
 .el .IP "\f(CWforks [<owner>/<repo>]\fR" 4
 .IX Item "forks [<owner>/<repo>]"
 List the forks of a repository.
-.ie n .IP """fork <owner>/<repo> [<org>] [\-\-remote=<name>]""" 4
-.el .IP "\f(CWfork <owner>/<repo> [<org>] [\-\-remote=<name>]\fR" 4
-.IX Item "fork <owner>/<repo> [<org>] [--remote=<name>]"
+.ie n .IP """fork <owner>/<repo> [\-\-org=<org>] [\-\-remote=<name>]""" 4
+.el .IP "\f(CWfork <owner>/<repo> [\-\-org=<org>] [\-\-remote=<name>]\fR" 4
+.IX Item "fork <owner>/<repo> [--org=<org>] [--remote=<name>]"
 Fork a repository to your account or to an organization. Optionally, you can
 specify the name of a remote to add, pointing to your fork.
 .ie n .IP """stars [<owner>/<repo>]""" 4
@@ -602,13 +684,13 @@ Close an issue. You can also use \f(CW\*(C`issue\-edit\*(C'\fR to close an issue
 .el .IP "\f(CWissue\-resolve [<owner>/<repo>] <issue\-id\-number>\fR" 4
 .IX Item "issue-resolve [<owner>/<repo>] <issue-id-number>"
 Add a comment to an issue and then close it.
-.ie n .IP """pulls [<owner>/<repo>]""" 4
-.el .IP "\f(CWpulls [<owner>/<repo>]\fR" 4
-.IX Item "pulls [<owner>/<repo>]"
+.ie n .IP """pr\-list [<owner>/<repo>]""" 4
+.el .IP "\f(CWpr\-list [<owner>/<repo>]\fR" 4
+.IX Item "pr-list [<owner>/<repo>]"
 List the pull requests for a repo.
-.ie n .IP """pull\-request [<issue\-id\-number>] [<options>]""" 4
-.el .IP "\f(CWpull\-request [<issue\-id\-number>] [<options>]\fR" 4
-.IX Item "pull-request [<issue-id-number>] [<options>]"
+.ie n .IP """pr\-new [<issue\-id\-number>] [<options>]""" 4
+.el .IP "\f(CWpr\-new [<issue\-id\-number>] [<options>]\fR" 4
+.IX Item "pr-new [<issue-id-number>] [<options>]"
 Create a new pull request for a repository based on the current branch. If an
 issue \s-1ID\s0 number is given, this command will attach the pull request to the
 issue instead of creating a new one.
@@ -618,21 +700,21 @@ branch of the parent repository. Otherwise the pull request will target the
 default branch of the default remote itself. Use \f(CW\*(C`\-\-remote\*(C'\fR, \f(CW\*(C`\-\-branch\*(C'\fR, \f(CW\*(C`\-\-
 parent\*(C'\fR, and \f(CW\*(C`\-\-base\*(C'\fR options to change the default source remote, source
 branch, target remote and target branch (respectively).
-.ie n .IP """pull\-diff [<owner>/<repo>] <issue\-id\-number>""" 4
-.el .IP "\f(CWpull\-diff [<owner>/<repo>] <issue\-id\-number>\fR" 4
-.IX Item "pull-diff [<owner>/<repo>] <issue-id-number>"
+.ie n .IP """pr\-diff [<owner>/<repo>] <issue\-id\-number>""" 4
+.el .IP "\f(CWpr\-diff [<owner>/<repo>] <issue\-id\-number>\fR" 4
+.IX Item "pr-diff [<owner>/<repo>] <issue-id-number>"
 Show the diff for a pull request.
-.ie n .IP """pull\-fetch [<owner>/<repo>] <issue\-id\-number>""" 4
-.el .IP "\f(CWpull\-fetch [<owner>/<repo>] <issue\-id\-number>\fR" 4
-.IX Item "pull-fetch [<owner>/<repo>] <issue-id-number>"
+.ie n .IP """pr\-fetch [<owner>/<repo>] <issue\-id\-number>""" 4
+.el .IP "\f(CWpr\-fetch [<owner>/<repo>] <issue\-id\-number>\fR" 4
+.IX Item "pr-fetch [<owner>/<repo>] <issue-id-number>"
 Fetches a pull request to a local \f(CW\*(C`review/$number\*(C'\fR branch
-.ie n .IP """pull\-merge [<owner>/<repo>] <issue\-id\-number>""" 4
-.el .IP "\f(CWpull\-merge [<owner>/<repo>] <issue\-id\-number>\fR" 4
-.IX Item "pull-merge [<owner>/<repo>] <issue-id-number>"
+.ie n .IP """pr\-merge [<owner>/<repo>] <issue\-id\-number>""" 4
+.el .IP "\f(CWpr\-merge [<owner>/<repo>] <issue\-id\-number>\fR" 4
+.IX Item "pr-merge [<owner>/<repo>] <issue-id-number>"
 Merge and close a pull request.
-.ie n .IP """pull\-queue [<user>] [\-\-count=#] [\-\-all]""" 4
-.el .IP "\f(CWpull\-queue [<user>] [\-\-count=#] [\-\-all]\fR" 4
-.IX Item "pull-queue [<user>] [--count=#] [--all]"
+.ie n .IP """pr\-queue [<user>] [\-\-count=#] [\-\-all]""" 4
+.el .IP "\f(CWpr\-queue [<user>] [\-\-count=#] [\-\-all]\fR" 4
+.IX Item "pr-queue [<user>] [--count=#] [--all]"
 Show a user's Pull Request queue, for all repos. Shows the open PRs for any
 repo that has them. The \f(CW\*(C`\-\-count\*(C'\fR option tells how many repos to check. The
 \&\f(CW\*(C`\-\-all\*(C'\fR option says to show closed as well as open PRs.
@@ -640,6 +722,11 @@ repo that has them. The \f(CW\*(C`\-\-count\*(C'\fR option tells how many repos 
 Note: this command makes more \s-1API\s0 calls than most other commands and thus runs
       slower. You might want to tee the output to a file, if you need to get
       back to this data a lot.
+.ie n .IP """notify\-list [\-\-all]""" 4
+.el .IP "\f(CWnotify\-list [\-\-all]\fR" 4
+.IX Item "notify-list [--all]"
+List your recent \fIunread\fR user notifications. To list your \fIread\fR
+notifications as well, use the \f(CW\*(C`\-\-all\*(C'\fR option.
 .ie n .IP """keys [<user>]""" 4
 .el .IP "\f(CWkeys [<user>]\fR" 4
 .IX Item "keys [<user>]"
@@ -972,7 +1059,7 @@ than 50 repos:
 .Ve
 .SH "Author"
 .IX Header "Author"
-Written by Ingy döt Net <ingy@ingy.net>
+Written by Ingy dÃ¶t Net <ingy@ingy.net>
 .SH "Status"
 .IX Header "Status"
 This command is over a year old. It does a ton of stuff well, but still has a
@@ -992,4 +1079,4 @@ ideas.
 .IX Header "Copyright & License"
 The \s-1MIT\s0 License (\s-1MIT\s0)
 .PP
-Copyright 2013\-2014. Ingy döt Net.
+Copyright 2013\-2014. Ingy dÃ¶t Net.

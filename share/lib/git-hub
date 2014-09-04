@@ -17,7 +17,7 @@ set -e
   unset -f Bash:version-check
 }
 
-GIT_HUB_VERSION=0.1.3
+GIT_HUB_VERSION=0.1.4
 
 OPTIONS_SPEC="\
 git hub <command> <options> <arguments>
@@ -27,7 +27,7 @@ The most commonly used commands:
   user, orgs, org, teams, members, followers, following, follow, stars, star,
   clone, repos, repo, repo-new, repo-delete, forks, fork, collabs, trust,
   issues, issue, issue-update, issue-close, comment,
-  pull-request, pulls, pull-diff, pull-merge, search
+  pr-new, pr-list, pr-diff, pr-merge, pr-fetch
 
 See 'git hub help' for more help.
 
@@ -52,7 +52,7 @@ A,use-auth  Force the use of authentication. (Get around rate limits)
 C,no-cache  Don't use cached responses.
 token=      Explicitly specify the GitHub v3 API Authentication Token
 d,dryrun    Check arguments but don't actually run the API command
-T           Show API token in the verbose output
+T           Show (don't hide) API token in the verbose output
  
 O           Debug - Show response output
 H           Debug - Show reponse headers
@@ -88,7 +88,7 @@ run-command() {
   local msg_ok msg_fail status_code ERROR
   local count_option do_all=false use_auth no_cache
   local quiet_output verbose_output
-  local raw_output=false json_output=false
+  local raw_output=false json_output=false interactive=
   local show_output=false show_headers=false show_json=false
   local dry_run=false show_token repeat_command=false
   local terminal_lines terminal_cols
@@ -342,7 +342,7 @@ cache-response-files() {
   grep -E '^Status: 304' "$GIT_HUB_CACHE/head" &> /dev/null || {
     for f in head out err; do
       [ -e "$GIT_HUB_CACHE/$f" ] &&
-        mv "$GIT_HUB_CACHE/$f" "$cache_dir"
+        cp "$GIT_HUB_CACHE/$f" "$cache_dir"
     done
   }
 }
@@ -387,6 +387,49 @@ check-api-call-status() {
 OK() { return $OK; }
 
 #------------------------------------------------------------------------------
+# Config management:
+#------------------------------------------------------------------------------
+check-config() {
+  [ -e "$GIT_HUB_CONFIG" ] || config-not-setup
+  read-config-value login && login="$value" || login=
+  if [ -z "$login" ]; then
+    config-not-setup
+  fi
+}
+
+dump-config() {
+  [ ! -e "$GIT_HUB_CONFIG" ] && config-not-setup
+  say "Your git-hub config file (at $GIT_HUB_CONFIG):\n"
+  cat "$GIT_HUB_CONFIG" || return 1
+}
+
+read-config-value() {
+  value=
+  value="$(git config -f $GIT_HUB_CONFIG "git-hub.$1")" || {
+    value="$(git config -f $GIT_HUB_CONFIG "github.$1")" || return 1
+
+    # This auto-migrates github to git-hub. Added 2014/08/11.
+    # TODO Remove after a few months.
+    git config -f $GIT_HUB_CONFIG "git-hub.$1" "$value"
+    git config -f $GIT_HUB_CONFIG --unset "github.$1"
+    if [ -z "$(git config -f $GIT_HUB_CONFIG --get-regex github)" ]; then
+      git config -f $GIT_HUB_CONFIG --remove-section github 2> /dev/null || true
+    fi
+
+  }
+}
+
+write-config-value() {
+  git config -f $GIT_HUB_CONFIG "git-hub.$1" "$2" || return 1
+}
+
+delete-config-value() {
+  git config -f $GIT_HUB_CONFIG --unset "git-hub.$1" || {
+    git config -f $GIT_HUB_CONFIG --unset "github.$1" || return 1
+  }
+}
+
+#------------------------------------------------------------------------------
 # Argument parsing functions:
 #------------------------------------------------------------------------------
 get-args() {
@@ -400,11 +443,16 @@ get-args() {
     if [[ "$spec" =~ ^\? ]]; then
       optional=true
       spec="${spec#\?}"
-      if [[ "$spec" =~ / ]] && [[ ! "$spec" =~ : ]] && [[ ! "$arg" =~ / ]]; then
+      if [[ "$spec" =~ / ]] &&
+        [[ ! "$spec" =~ : ]] &&
+        [[ ! "$arg" =~ / ]]
+      then
         specs=("${specs[@]:1}")
         continue
       fi
-      if [ ${#args[@]} -lt ${#specs[@]} ] && [[ ! "${specs[1]}" =~ ^\? ]]; then
+      if [ ${#args[@]} -lt ${#specs[@]} ] &&
+        [[ ! "${specs[1]}" =~ ^\? ]]
+      then
         if [[ "$spec" =~ : ]]; then
           arg=''
           spec-assign
@@ -524,7 +572,9 @@ get-user() {
 }
 
 get-login() {
-  get-hub-config login
+  if read-config-value login; then
+    echo "$value"
+  fi
 }
 
 get-owner() {
@@ -538,6 +588,64 @@ get-owner() {
 
 get-repo() {
   get-repo-config repo
+}
+
+get-remote-name() {
+  value=
+  [ -n "$remote_name" ] && value="$remote_name" && return
+  value="$(get-default-remote-name)"
+  [ -n "$value" ] && return 0 || return 1
+}
+
+get-default-remote-name() {
+  [ -n "$remote_name" ] && return
+  local owner="$(get-repo-config owner)"
+  local repo="$(get-repo-config repo)"
+  remote_name="$(
+    git remote -v |
+    grep "$owner/$repo" |
+    grep "(fetch)" |
+    head -n1 |
+    cut -f 1
+  )"
+}
+
+get-branch-name() {
+  [ -n "$branch_name" ] && return
+  branch_name="$(git rev-parse --abbrev-ref HEAD)"
+}
+
+get-parent-owner-repo() {
+  [ -n "$parent_owner_repo" ] && return
+  get-parent-remote-name
+  local remote_name="$parent_remote_name"
+  local parent_owner="$(get-repo-config owner)"
+  local parent_repo="$(get-repo-config repo)"
+  parent_owner_repo="$parent_owner/$parent_repo"
+}
+
+get-parent-remote-name() {
+  [ -n "$parent_remote_name" ] && return
+  local owner="$(get-owner)"
+  local repo="$(get-repo)"
+  api-get "/repos/$owner/$repo"
+  OK || {
+    abort "Repo '$owner/$repo' not found"
+  }
+  local value="$(JSON.get -a "/parent/full_name" -)"
+  if [ -z "$value" ]; then
+    # parent for PR is self
+    get-default-remote-name
+    parent_remote_name="$remote_name"
+  else
+    parent_remote_name="$(git remote -v | grep "$value" | grep "(fetch)" | cut -f 1)"
+  fi
+}
+
+get-parent-base() {
+  [ -n "$parent_base" ] && return
+  get-parent-owner-repo
+  parent_base="$(git hub repo-get $parent_owner_repo default_branch)"
 }
 
 get-repo-config() {
@@ -571,66 +679,6 @@ get-repo-config() {
   return 1
 }
 
-get-remote-name() {
-  [ -n "$remote_name" ] && return
-  local remotes=($(git config --get-regex 'remote\..*\.fetch' | cut -d ' ' -f1))
-  local num="${#remotes[@]}"
-  if [ $num -eq 1 ]; then
-    remote_name="${remotes[0]}"
-    remote_name="${remote_name#remote.}"
-    remote_name="${remote_name%.fetch}"
-  elif [ $num -eq 0 ]; then
-    error "This command requires a remote name, but the current repo has no remotes. Add a remote or use the --remote= option."
-  else
-    error "This command requires a remote name, but the current repo has more than one remote. Use the --remote= option to specify which one."
-  fi
-}
-
-get-default-remote-name() {
-  [ -n "$remote_name" ] && return
-  local owner="$(get-repo-config owner)"
-  local repo="$(get-repo-config repo)"
-  remote_name="$(git remote -v | grep "$owner/$repo" | grep "(fetch)" | cut -f 1)"
-}
-
-get-branch-name() {
-  [ -n "$branch_name" ] && return
-  branch_name="$(git rev-parse --abbrev-ref HEAD)"
-}
-
-get-parent-owner-repo() {
-  [ -n "$parent_owner_repo" ] && return
-  get-parent-remote-name
-  local remote_name="$parent_remote_name"
-  local parent_owner="$(get-repo-config owner)"
-  local parent_repo="$(get-repo-config repo)"
-  parent_owner_repo="$parent_owner/$parent_repo"
-}
-
-get-parent-remote-name() {
-  [ -n "$parent_remote_name" ] && return
-  local owner="$(get-owner)"
-  local repo="$(get-repo)"
-  api-get "/repos/$owner/$repo"
-  OK || {
-    abort "Repo '$owner/$repo' not found"
-  }
-  local value="$(JSON.get -a "/parent/full_name" -)"
-  if [ -z "$value" ]; then
-    # parent for pull requests is self
-    get-default-remote-name
-    parent_remote_name="$remote_name"
-  else
-    parent_remote_name="$(git remote -v | grep "$value" | grep "(fetch)" | cut -f 1)"
-  fi
-}
-
-get-parent-base() {
-  [ -n "$parent_base" ] && return
-  get-parent-owner-repo
-  parent_base="$(git hub repo-get $parent_owner_repo default_branch)"
-}
-
 require-auth() {
   [ -z "$api_token" ] && get-var api-token
   if [ "$api_token" == XXX ]; then
@@ -655,14 +703,6 @@ check-token-id() {
   [[ "$id" =~ $regex ]] ||
     error "'$id' is invalid token-id. Must be an integer value."
   true
-}
-
-get-hub-config() {
-  local value=
-  if [ -e "$GIT_HUB_CONFIG" ]; then
-    value="$(git config -f "$GIT_HUB_CONFIG" github."$1" 2>/dev/null)"
-  fi
-  echo "${value:-$2}"
 }
 
 #------------------------------------------------------------------------------
@@ -1091,6 +1131,13 @@ get-opts() {
 }
 
 interactive() {
+  if [ -n "$interactive" ]; then
+    if $interactive; then
+      return 0
+    else
+      return 1
+    fi
+  fi
   if [ -t 0 -a -t 1 ]; then
     return 0
   else
@@ -1125,24 +1172,14 @@ set-var() {
   printf -v "$name" "$value"
 }
 
-check-config() {
-  [ -e "$GIT_HUB_CONFIG" ] || config-not-setup
-  local user_name="$(
-    git config -f "$GIT_HUB_CONFIG" github.user-name || echo ''
-  )"
-  login="$(git config -f "$GIT_HUB_CONFIG" github.login || echo '')"
-  if [[ -n "$user_name" ]] || [[ -z "$login" ]]; then
-    config-not-setup
-  fi
-}
-
 get-var() {
   local var="${1//-/_}"
   [ -n "${!var}" ] && return
   local env="GIT_HUB_$(echo "$var" | tr 'a-z' 'A-Z')"
   printf -v "$var" "${!env}"
   [ -n "${!var}" ] && return
-  printf -v "$var" "$(get-hub-config "$1")"
+  read-config-value "$1" || true
+  printf -v "$var" "$value"
   true
 }
 
@@ -1420,23 +1457,6 @@ assert-git-repo-is-clean() {
     abort "working tree has changes."
   git diff-index --quiet --cached --ignore-submodules HEAD ||
     abort "index has changes."
-}
-
-assert-git-on-branch() {
-  local branch="$(git rev-parse --abbrev-ref HEAD)"
-  [ -n "$branch" -a "$branch" != "HEAD" ] ||
-    abort "repo HEAD is not currently on a branch"
-}
-
-assert-git-head-is-pushed() {
-  local ref="$(git rev-parse HEAD)"
-  local branch="$(git rev-parse --abbrev-ref HEAD)"
-  local text="$(
-    git branch -r --contains "$ref" 2> /dev/null |
-      grep "$remote_name/$branch"
-  )"
-  [ -n "$text" ] ||
-    abort "current HEAD is not pushed to remote '$remote_name'"
 }
 
 inside-git-repo() {

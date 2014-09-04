@@ -20,10 +20,11 @@ share/lib/git-hub.d/git-hub-irc
 share/lib/git-hub.d/git-hub-issue
 share/lib/git-hub.d/git-hub-keys
 share/lib/git-hub.d/git-hub-member
+share/lib/git-hub.d/git-hub-notify
 share/lib/git-hub.d/git-hub-open
 share/lib/git-hub.d/git-hub-org
 share/lib/git-hub.d/git-hub-other
-share/lib/git-hub.d/git-hub-pull
+share/lib/git-hub.d/git-hub-pr
 share/lib/git-hub.d/git-hub-repo
 share/lib/git-hub.d/git-hub-repo-init
 share/lib/git-hub.d/git-hub-scope
@@ -40,5 +41,6 @@ share/lib/git-hub.d/json-setup.bash
 share/lib/git-hub.d/json.bash
 share/lib/git-hub.d/json.pl
 share/man/man1/git-hub.1
+t/000-compile-modules.t
 t/release-pod-syntax.t
 t/test.t
