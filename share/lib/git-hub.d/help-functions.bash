@@ -18,6 +18,7 @@ following            following [<user>]
 follows              follows <user> [<target-user>]
 fork                 fork <owner>/<repo> [--org=<org>] [--remote=<name>]
 forks                forks [<owner>/<repo>]
+git-hub-travis       git-hub-travis
 help                 help
 info                 info
 irc-enable           irc-enable <room> [<server>]
@@ -34,12 +35,13 @@ keys-add             keys-add <title> <key>
 member-add           member-add <team_id> <user>
 member-get           member-get <team_id> <user>
 member-remove        member-remove <team_id> <user>
-members              members <org>
+members              members <org>|<team_id>
 notify-list          notify-list [--all]
 open                 open [<owner>/<repo>] [<file-path>]
 org                  org <org>
 org-edit             org-edit <org> <key-value-pairs>...
 org-get              org-get <org> <data-key>
+org-members          org-members <org>
 org-repos            org-repos <org>
 orgs                 orgs [<user>]
 pr-diff              pr-diff [<owner>/<repo>] <issue-id-number>
@@ -64,7 +66,9 @@ starred              starred [<user>]
 stars                stars [<owner>/<repo>]
 team                 team <team_id>
 team-delete          team-delete <team_id>
+team-members         team-members <team_id>
 team-new             team-new <org> <name> <perm>
+team-repo-add        team-repo-add <team_id> <repo>
 team-repos           team-repos <team_id>
 teams                teams <org>
 token-delete         token-delete <api-token-id>
@@ -201,6 +205,15 @@ help:forks() {
   Usage: git hub forks [<owner>/<repo>]
 
   List the forks of a repository.
+...
+}
+
+help:git-hub-travis() {
+    cat <<'...'
+
+  Usage: git hub git-hub-travis
+
+  Enable and/or disable travis-ci testing from the command line.
 ...
 }
 
@@ -361,9 +374,10 @@ help:member-remove() {
 help:members() {
     cat <<'...'
 
-  Usage: git hub members <org>
+  Usage: git hub members <org>|<team_id>
 
-  List the members of an organization.
+  List the members of an organization or team. If numeric argument, show team
+  members, else organization members.
 ...
 }
 
@@ -415,6 +429,15 @@ help:org-get() {
   Usage: git hub org-get <org> <data-key>
 
   Get a specific data value for a particular organization.
+...
+}
+
+help:org-members() {
+    cat <<'...'
+
+  Usage: git hub org-members <org>
+
+  List members of an organization.
 ...
 }
 
@@ -669,6 +692,15 @@ help:team-delete() {
 ...
 }
 
+help:team-members() {
+    cat <<'...'
+
+  Usage: git hub team-members <team_id>
+
+  List members of a team.
+...
+}
+
 help:team-new() {
     cat <<'...'
 
@@ -676,6 +708,15 @@ help:team-new() {
 
   Add a new team (name) to an organization. The 'perm' arg must be pull, push
   or admin.
+...
+}
+
+help:team-repo-add() {
+    cat <<'...'
+
+  Usage: git hub team-repo-add <team_id> <repo>
+
+  Add repo to a team.  Repo name must not include org name.
 ...
 }
 
